@@ -58,7 +58,7 @@ inputs and outputs.
 | 3 | `4.315e-04` | `5.524e-02` | `4.419e-01` | `3.620e+03` | Below 0.6 f16 ULP on this sweep. |
 | 4 | `3.641e-06` | `4.661e-04` | `3.729e-03` | `3.055e+01` | Sub-f16 relative error; not f32 ULP-level. |
 | 5 | `5.142e-07` | `6.582e-05` | `5.266e-04` | `4.314e+00` | A few f32 ULPs by this scale. |
-| 6 | `1.028e-07` | `1.316e-05` | `1.053e-04` | `8.625e-01` | Recommended f32-precision tier in the current comments. |
+| 6 | `1.028e-07` | `1.316e-05` | `1.053e-04` | `8.625e-01` | Recommended f32-precision. |
 | 7 | `8.608e-08` | `1.102e-05` | `8.814e-05` | `7.221e-01` | Similar f32-scale behavior to degree 6. |
 
 Relevant options:
@@ -77,7 +77,7 @@ are skipped by the test when forming relative error.
 | Polynomial degree | Max relative error | bf16 ULPs | f16 ULPs | f32 ULPs | Notes |
 | ---: | ---: | ---: | ---: | ---: | --- |
 | 2 | `6.126e-07` | `7.842e-05` | `6.273e-04` | `5.139e+00` | Small f32-scale residual; below the asserted 8 f32 ULP bound. |
-| 3 | `2.110e-07` | `2.701e-05` | `2.161e-04` | `1.770e+00` | Current recommended degree in source comments. |
+| 3 | `2.110e-07` | `2.701e-05` | `2.161e-04` | `1.770e+00` | Basically no meaningful improvement from here. |
 | 4 | `2.110e-07` | `2.701e-05` | `2.161e-04` | `1.770e+00` | No measured improvement over degree 3 on this sweep. |
 | 5 | `2.110e-07` | `2.701e-05` | `2.161e-04` | `1.770e+00` | Same measured floor as degree 3. |
 | 6 | `2.110e-07` | `2.701e-05` | `2.161e-04` | `1.770e+00` | Same measured floor as degree 3. |
