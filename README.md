@@ -19,9 +19,6 @@ zeroing, which is the intended use case for these primitives in general.
 | Exponential | `exp_simd` | `SIMD[float32, width]` | `simd_math/exponential.mojo` | Polynomial approximation to `exp(x)` with configurable degree 2-7. |
 | Logarithm | `log_simd` | `SIMD[float32, width]` | `simd_math/logarithm.mojo` | Polynomial approximation to `log(x)` with configurable degree 2-7. |
 | Trigonometry | `sincos_simd` | `SIMD[float64, width]` | `simd_math/sincos.mojo` | Joint sine/cosine approximation with configurable degree 4-10 and optional Cody-Waite range reduction. |
-| Basic ops | `sqrt` | generic SIMD float | `simd_math/ops.mojo` | Wrapper around LLVM `sqrt`. |
-| Basic ops | `roundeven` | generic SIMD float | `simd_math/ops.mojo` | Wrapper around LLVM `nearbyint`, intended for round-to-nearest-even behavior. |
-| Quantization | `quantize_i8` | `float32` SIMD to `int8` SIMD | `simd_math/ops.mojo` | Scale, round, clamp, and cast to signed 8-bit integer. |
 | Matrix/SIMD utilities | transpose, interleave, reductions, top-k helpers | generic SIMD/integer types | `simd_math/matrixops.mojo` | Compile-time SIMD layout and reduction utilities. |
 | Runtime flags | `set_subnormal_zeroing`, `get_mxcsr` | MXCSR control | `simd_math/fast_flags.mojo` | Enables or reads x86 SIMD floating-point control flags. |
 
