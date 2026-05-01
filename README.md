@@ -66,7 +66,7 @@ Relevant options:
 | Option | Default | Effect |
 | --- | --- | --- |
 | `ieee_corrections` | `False` | Uses a lower clamp for underflow-range inputs and a split `ln(2)` range-reduction path. This is not full IEEE conformance. |
-| `never_overshoot` | `False` | Selects biased coefficients intended to avoid overshoot in the approximation. |
+| `never_overshoot` | `False` | Selects biased coefficients that will never overshoot ~ use for softmax or in places where overshooting the distribution is a problem |
 
 ## `log_simd`
 
