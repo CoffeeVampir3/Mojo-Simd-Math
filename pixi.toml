@@ -13,3 +13,4 @@ test-all = { depends-on = ["test-exp", "test-log", "test-sincos"] }
 test-exp = "mojo run simd_math/tests/test_exp.mojo"
 test-log = "mojo run simd_math/tests/test_log.mojo"
 test-sincos = "mojo run simd_math/tests/test_sincos.mojo -Xlinker -lm"
+bench-exp = "mojo run -O3 simd_math/tests/bench_exp.mojo"

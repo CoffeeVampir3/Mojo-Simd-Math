@@ -154,3 +154,41 @@ def exp_simd[
     )
 
     return p * pow2n
+
+
+# Fast biased Schraudolph-style exp for approximate bf16 softmax/attention.
+#
+# This is intentionally not a general exp replacement. It is a raw no-clamp path
+# for post-shift softmax inputs where x <= 0 and the caller wants a biased
+# undershooting exp. The coefficients were fitted in study/fit_schraudolph_one_sided.py
+# by a constrained linear program over dense f32 grid samples in [-30, 0] with
+# the constraint approx(x) <= exp(x).
+#
+# Error profile on that fitted range:
+#   max relative error ≈ -6.88e-3
+#   max rounded-bf16 distance = 2 ULPs
+#   ≈95.9% within 1 rounded-bf16 ULP
+#
+# Raw finite bit-path range for these constants is approximately [-87.5219, 0].
+# Inputs below that can produce NaN/negative nonsense from the bitcast. In
+# softmax those lanes are far below f32 relevance after max subtraction, so the
+# caller should mask/drop/zero them before using this function rather than paying
+# a per-lane clamp inside the hot exp path.
+@always_inline
+def fast_exp_softmax_biased[width: Int](
+    x: SIMD[DType.float32, width],
+) -> SIMD[DType.float32, width]:
+    comptime A_MAGIC = Float32(12102203.16156148)  # 2^23 / ln 2
+    comptime BIAS_F = Float32(1059208216.0)        # 127*2^23 - 6_145_000
+    comptime INV_TWO23 = Float32(1.0) / Float32(1 << 23)
+
+    comptime QC_A = Float32(1.6501418352127075)
+    comptime QC_B = Float32(-0.37554836273193359)
+    comptime QC_C = Float32(0.38696467876434326)
+
+    var i = (A_MAGIC * x + BIAS_F).cast[DType.int32]()
+    var u = i.cast[DType.uint32]()
+    var k = SIMD[DType.float32, width](from_bits=u)
+    var fbits = u & SIMD[DType.uint32, width](0x7FFFFF)
+    var f = fbits.cast[DType.float32]() * INV_TWO23
+    return k * (QC_A + f * (QC_B + f * QC_C))

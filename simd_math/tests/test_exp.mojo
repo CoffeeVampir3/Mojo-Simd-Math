@@ -1,4 +1,4 @@
-from simd_math import exp_simd
+from simd_math import exp_simd, fast_exp_softmax_biased
 from std.math import exp as libm_exp
 from std.os import abort
 from std.sys.info import simd_width_of
@@ -40,6 +40,50 @@ def measure_max_rel_err[
     return max_err
 
 
+def measure_fast_softmax_biased(lo: Float64, hi: Float64, n: Int) -> Tuple[Float64, Float64]:
+    var max_under = Float64(0.0)
+    var max_over = Float64(0.0)
+    var step = (hi - lo) / Float64(n)
+    var i = 0
+    while i + W <= n:
+        var xv = SIMD[DType.float32, W]()
+        var k = 0
+        while k < W:
+            xv[k] = Float32(lo + Float64(i + k) * step)
+            k += 1
+        var got = fast_exp_softmax_biased[W](xv)
+        var j = 0
+        while j < W:
+            var truth = libm_exp(Float64(xv[j]))
+            var rel = Float64(got[j]) / truth - Float64(1.0)
+            if rel < -max_under:
+                max_under = -rel
+            if rel > max_over:
+                max_over = rel
+            j += 1
+        i += W
+    return (max_under, max_over)
+
+
+def expect_finite_fast_softmax_biased(lo: Float64, hi: Float64, n: Int) -> Bool:
+    var step = (hi - lo) / Float64(n)
+    var i = 0
+    while i + W <= n:
+        var xv = SIMD[DType.float32, W]()
+        var k = 0
+        while k < W:
+            xv[k] = Float32(lo + Float64(i + k) * step)
+            k += 1
+        var got = fast_exp_softmax_biased[W](xv)
+        var j = 0
+        while j < W:
+            if got[j] <= Float32(0.0) or got[j] != got[j]:
+                return False
+            j += 1
+        i += W
+    return True
+
+
 def report(label: String, rel: Float64):
     print(
         "  ", label, "  rel=", rel,
@@ -71,6 +115,7 @@ def main():
     var e5 = measure_max_rel_err[5](lo, hi, n)
     var e6 = measure_max_rel_err[6](lo, hi, n)
     var e7 = measure_max_rel_err[7](lo, hi, n)
+    var biased = measure_fast_softmax_biased(-30.0, 0.0, n)
 
     report(String("N=2"), e2)
     report(String("N=3"), e3)
@@ -78,6 +123,11 @@ def main():
     report(String("N=5"), e5)
     report(String("N=6"), e6)
     report(String("N=7"), e7)
+    print(
+        "  fast_exp_softmax_biased[-30,0]  max_under=", biased[0],
+        "  max_over=", biased[1],
+        sep="",
+    )
 
     print()
     print("Assertions (documented bounds in exponential.mojo):")
@@ -94,6 +144,23 @@ def main():
     expect_le(failed, String("N=6 < 1.5 f32 ULPs (loss-free for f32)"), e6, F32_ULP * 1.5)
     # N=7: documented ~0.7 f32 ULPs → bound 1.5
     expect_le(failed, String("N=7 < 1.5 f32 ULPs (saturated)"), e7, F32_ULP * 1.5)
+    expect_le(
+        failed,
+        String("fast_exp_softmax_biased undershoot <= 0.007 on [-30, 0]"),
+        biased[0],
+        Float64(0.007),
+    )
+    expect_le(
+        failed,
+        String("fast_exp_softmax_biased max overshoot <= 0 on [-30, 0]"),
+        biased[1],
+        Float64(0.0),
+    )
+    if not expect_finite_fast_softmax_biased(-87.52, 0.0, n):
+        print("  FAIL fast_exp_softmax_biased finite/positive over documented finite range")
+        failed += 1
+    else:
+        print("  pass fast_exp_softmax_biased finite/positive over documented finite range")
 
     print()
     if failed > 0:
